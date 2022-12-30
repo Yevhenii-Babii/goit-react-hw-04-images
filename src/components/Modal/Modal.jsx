@@ -1,35 +1,39 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import 'styles.css';
+import { useEffect } from 'react';
 
-export class Modal extends React.Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.onKeyDown);
-  }
+export function Modal({ closeModal, largeImgUrl, tags }) {
+  useEffect(() => {
+    const onKeyDown = event => {
+      if (event.key === 'Escape') {
+        closeModal();
+        console.log(event.key);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [closeModal]);
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.onKeyDown);
-  }
-
-  onKeyDown = event => {
-    if (event.key === 'Escape') {
-      this.props.closeModal();
-      console.log(event.key);
-    }
-  };
-
-  onBackDropClick = event => {
+  const onBackDropClick = event => {
     if (event.currentTarget === event.target) {
-      this.props.closeModal();
+      closeModal();
     }
   };
 
-  render() {
-    return (
-      <div className="Overlay" onClick={this.onBackDropClick}>
-        <div className="Modal">
-          <img src={this.props.largeImgUrl} alt="" />
-        </div>
+  return (
+    <div className="Overlay" onClick={onBackDropClick}>
+      <div className="Modal">
+        <img src={largeImgUrl} alt={tags} />
       </div>
-    );
-  }
+    </div>
+  );
 }
+
+Modal.propTypes = {
+  closeModal: PropTypes.func.isRequired,
+  alt: PropTypes.string,
+  largeImgUrl: PropTypes.string.isRequired,
+};

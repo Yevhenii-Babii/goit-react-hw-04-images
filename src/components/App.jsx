@@ -6,71 +6,59 @@ import { Modal } from './Modal/Modal';
 import { fetchPictures } from 'helpers/api';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { ButtonLoad } from 'components/Button/Button';
-
 import { Loader } from './Loader/Loader';
+import { useState, useEffect } from 'react';
 
-export class App extends React.Component {
-  state = {
-    post: [],
-    query: '',
-    page: 1,
-    isLoad: false,
-    error: '',
-    modalImg: null,
-  };
+export function App() {
+  const [post, setPost] = useState([]);
+  const [query, setquery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoad, setIsLoad] = useState(false);
+  // const [errore,setError] = useState('');
+  const [modalImg, setModalImg] = useState(null);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-    if (prevState.query !== query || prevState.page !== page) {
+  useEffect(() => {
+    if (!query) return;
+    async function loadAsyncImages() {
       try {
-        this.setState({ isLoad: true });
+        setIsLoad(true);
         const newImg = await fetchPictures(query, page);
-        this.setState(prevState => ({ post: [...prevState.post, ...newImg] }));
+        setPost(prevState => [...prevState, ...newImg]);
       } catch (error) {
-        this.setState({ error: error.message });
+        // setError(errore);
       } finally {
-        this.setState({
-          isLoad: false,
-        });
+        setIsLoad(false);
       }
     }
-  }
+    loadAsyncImages();
+  }, [page, query]);
 
-  handleSubmit = query => {
-    this.setState({ query: query, page: 1, post: [] });
+  const handleSubmit = query => {
+    setPost([]);
+    setPage(1);
+    setquery(query);
   };
 
-  onLoadMoreClick = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const onLoadMoreClick = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  getLargeImgURL = url => {
-    this.setState({ modalImg: url });
+  const getLargeImgURL = url => {
+    setModalImg(url);
   };
 
-  closeModal = () => {
-    this.setState({
-      modalImg: null,
-    });
+  const closeModal = () => {
+    setModalImg(null);
   };
 
-  render() {
-    return (
-      <div>
-        <Searchbar onSubmit={this.handleSubmit} />
-        {this.state.isLoad && <Loader />}
+  return (
+    <div>
+      <Searchbar onSubmit={handleSubmit} />
+      {isLoad && <Loader />}
 
-        <ImageGallery list={this.state.post} getUrl={this.getLargeImgURL} />
-        {this.state.post.length === 0 ? null : (
-          <ButtonLoad onClick={this.onLoadMoreClick} />
-        )}
-        {this.state.modalImg && (
-          <Modal
-            largeImgUrl={this.state.modalImg}
-            closeModal={this.closeModal}
-          />
-        )}
-      </div>
-    );
-  }
+      <ImageGallery list={post} getUrl={getLargeImgURL} />
+      {post.length === 0 ? null : <ButtonLoad onClick={onLoadMoreClick} />}
+      {modalImg && <Modal largeImgUrl={modalImg} closeModal={closeModal} />}
+    </div>
+  );
 }
